@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { createNoise2D } from "simplex-noise";
 
-let camera, scene, renderer;
+let camera: THREE.PerspectiveCamera, scene: THREE.Scene, renderer: THREE.WebGLRenderer;
 let mesh;
 
 const cubesize = 30;
@@ -22,23 +22,10 @@ function init() {
   const cubes = new THREE.Object3D();
   scene.add(cubes);
 
-  const xoff = (landscape_width * cubesize) / 2;
-  const yoff = (landscape_length * cubesize) / 2;
-  const noise2D = createNoise2D();
-  const noise_scale = 0.05;
-  for (let i = 1; i < landscape_width; i++) {
-    heights[i] = [];
-    for (let j = 1; j < landscape_length; j++) {
-      heights[i][j] = Math.floor(noise2D(noise_scale * i, noise_scale * j) * 10);
-      console.log(heights);
-      const grayness = 1 - noise2D(noise_scale * i, noise_scale * j),
-        mat = new THREE.MeshBasicMaterial(),
-        cube = new THREE.Mesh(geom, mat);
-      mat.color.setRGB(0, grayness, 0);
-      cube.position.set(i * cubesize - xoff, j * cubesize - yoff, heights[i][j] * 30);
-      cubes.add(cube);
-    }
-  }
+  Array.from(generateElevationMap())
+    .map((x) => convertTerrainBlockToGeometry(x, geom))
+    .forEach((x) => cubes.add(x));
+
   console.log(heights);
   renderer = new THREE.WebGLRenderer();
   renderer.setPixelRatio(window.devicePixelRatio);
@@ -73,7 +60,47 @@ type BiomeType = "white" | "green" | "brown";
 type ElevationMap = number[][];
 type TerrainBlock = {
   position: [number, number, number];
-  elevation: number;
   biomeType: BiomeType;
 };
-function renderElevationMap(map: ElevationMap) {}
+function* generateElevationMap() {
+  const xoff = landscape_width / 2;
+  const yoff = landscape_length / 2;
+  const noise2D = createNoise2D();
+  const noise_scale = 0.02;
+  for (let i = 1; i < landscape_width; i++) {
+    for (let j = 1; j < landscape_length; j++) {
+      const elevation = Math.floor(noise2D(noise_scale * i, noise_scale * j) * 10);
+      const block: TerrainBlock = {
+        position: [i - xoff, j - yoff, elevation],
+        biomeType: elevation > 6 ? "white" : elevation > 4 ? "brown" : "green",
+      };
+      yield block;
+    }
+  }
+}
+
+function convertTerrainBlockToGeometry(
+  { position: [x, y, z], biomeType }: TerrainBlock,
+  boxGeometry: THREE.BoxGeometry
+) {
+  const mat = new THREE.MeshBasicMaterial();
+  const cube = new THREE.Mesh(boxGeometry, mat);
+  const color = biomeType === "brown" ? 0x84694e : biomeType === "green" ? 0x7cfc00 : 0xeeeeee;
+
+  function hexWithGray(hex: number, factor: number) {
+    var r = ((hex >> 16) & 255) * factor;
+    var g = ((hex >> 8) & 255) * factor;
+    var b = (hex & 255) * factor;
+    console.log((r << 16) + (g << 8) + b);
+    return (r << 16) + (g << 8) + b;
+  }
+
+  const grayFactor = Math.min(1, (z + 10) / 20);
+
+  mat.color.setHex(hexWithGray(color, grayFactor));
+
+  console.log(grayFactor, color.toString(16), (color % (256 * 256)).toString(16));
+
+  cube.position.set(x * cubesize, y * cubesize, z * cubesize);
+  return cube;
+}
