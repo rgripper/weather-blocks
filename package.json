@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "preact": "^10.10.1",
+    "simplex-noise": "^4.0.0",
     "three": "^0.143.0"
   },
   "devDependencies": {
