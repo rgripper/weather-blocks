@@ -2,7 +2,6 @@ import * as THREE from "three";
 import { createNoise2D } from "simplex-noise";
 
 let camera: THREE.PerspectiveCamera, scene: THREE.Scene, renderer: THREE.WebGLRenderer;
-let mesh;
 
 const cubesize = 30;
 const landscape_width = 70;
@@ -53,11 +52,8 @@ init();
 
 animate();
 
-///
-
 type BiomeType = "white" | "green" | "brown";
 
-type ElevationMap = number[][];
 type TerrainBlock = {
   position: [number, number, number];
   biomeType: BiomeType;
