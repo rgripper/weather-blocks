@@ -42,8 +42,10 @@ export function convertTerrainBlockToMesh(
   boxGeometry: THREE.BoxGeometry,
   cubeSize: number
 ) {
-  const mat = new THREE.MeshBasicMaterial();
+  const mat = new THREE.MeshLambertMaterial();
   const cube = new THREE.Mesh(boxGeometry, mat);
+  // cube.receiveShadow = true
+  // cube.castShadow = true
   const color =
     biomeType === "brown"
       ? 0x84694e

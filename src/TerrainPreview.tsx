@@ -32,6 +32,20 @@ function init({
 
   const geom = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
 
+  const light = new THREE.DirectionalLight(0xffffff, 1.5);
+  light.position.set( 40, 60, 225);
+  light.castShadow = true;
+  light.shadow.bias = -0.005; // reduces self-shadowing on double-sided objects
+
+  light.add(
+    new THREE.Mesh(
+      new THREE.SphereGeometry(50, 10, 10),
+      new THREE.MeshBasicMaterial({
+        color: 0xffccaa,
+      })
+    )
+  );
+
   const items = Array.from(elevationBlocks).map((block) => ({
     mesh: convertTerrainBlockToMesh(block, geom, cubeSize),
     block,
@@ -43,8 +57,10 @@ function init({
   );
 
   scene.add(cubes);
+  scene.add(light);
 
   const renderer = new THREE.WebGLRenderer();
+  renderer.shadowMap.enabled = true;
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
@@ -71,7 +87,9 @@ function init({
       Math.sin(rads) * cameraOffset,
       cameraHeight
     );
+    light.lookAt(scene.position);
     camera.lookAt(scene.position);
+
     renderer.render(scene, camera);
   }
 
