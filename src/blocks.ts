@@ -8,7 +8,7 @@ export type TerrainBlock = {
   biomeType: BiomeType;
 };
 
-export function* generateElevationMap(landscapeSize: {
+export function* generateElevationBlocks(landscapeSize: {
   width: number;
   length: number;
 }) {

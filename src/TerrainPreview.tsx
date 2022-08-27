@@ -3,31 +3,36 @@ import { useEffect, useState } from "preact/hooks";
 import * as THREE from "three";
 import {
   convertTerrainBlockToMesh,
-  generateElevationMap,
+  generateElevationBlocks,
   TerrainBlock,
 } from "./blocks";
 
-const cubeSize = 30;
-const landscape_width = 70;
-const landscape_length = 70;
-const camera_offset = cubeSize * landscape_width * 0.7;
-const camera_height = (cubeSize * landscape_width) / 2;
+function init({
+  elevationBlocks,
+  cubeSize,
+  landscapeRadius,
+}: {
+  elevationBlocks: Iterable<TerrainBlock>;
+  cubeSize: number;
+  landscapeRadius: number;
+}) {
+  const cameraOffset = cubeSize * landscapeRadius * 1.4;
+  const cameraHeight = cubeSize * landscapeRadius;
 
-function init(elevationMap: Iterable<TerrainBlock>, cubeSize: number) {
   const camera = new THREE.PerspectiveCamera(
     70,
     window.innerWidth / window.innerHeight,
     1,
     10000
   );
-  camera.position.set(0, camera_offset, camera_height);
+  camera.position.set(0, cameraOffset, cameraHeight);
   camera.up = new THREE.Vector3(0, 0, 1);
   camera.lookAt(new THREE.Vector3(0, 0, 0));
   const scene = new THREE.Scene();
 
   const geom = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
 
-  const items = Array.from(elevationMap).map((block) => ({
+  const items = Array.from(elevationBlocks).map((block) => ({
     mesh: convertTerrainBlockToMesh(block, geom, cubeSize),
     block,
   }));
@@ -62,9 +67,9 @@ function init(elevationMap: Iterable<TerrainBlock>, cubeSize: number) {
   ) {
     const rads = (angle * Math.PI) / 180;
     camera.position.set(
-      Math.cos(rads) * camera_offset,
-      Math.sin(rads) * camera_offset,
-      camera_height
+      Math.cos(rads) * cameraOffset,
+      Math.sin(rads) * cameraOffset,
+      cameraHeight
     );
     camera.lookAt(scene.position);
     renderer.render(scene, camera);
@@ -90,10 +95,11 @@ export function TerrainPreview({
   const [container, setContainer] = useState<HTMLElement | null>(null);
   useEffect(() => {
     if (container) {
-      const { render, element } = init(
-        generateElevationMap({ width, length }),
-        cubeSize
-      );
+      const { render, element } = init({
+        elevationBlocks: generateElevationBlocks({ width, length }),
+        cubeSize,
+        landscapeRadius: width / 2,
+      });
 
       let angle = 0;
       let isDone = false;
@@ -104,7 +110,7 @@ export function TerrainPreview({
         window.requestAnimationFrame(tick);
       };
       tick();
-      
+
       container.append(element);
       return () => {
         isDone = true;
