@@ -34,6 +34,8 @@ function init({
 
   const light = new THREE.DirectionalLight(0xffffff, 1.5);
   light.position.set( 40, 60, 225);
+  light.shadow.mapSize.width = 512; // default
+  light.shadow.mapSize.height = 512; // default
   light.castShadow = true;
   light.shadow.bias = -0.005; // reduces self-shadowing on double-sided objects
 
