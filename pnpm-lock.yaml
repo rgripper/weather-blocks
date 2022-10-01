@@ -2,9 +2,11 @@ lockfileVersion: 5.4
 
 specifiers:
   '@preact/preset-vite': ^2.3.0
+  '@types/suncalc': ^1.8.1
   '@types/three': ^0.143.0
   preact: ^10.10.1
   simplex-noise: ^4.0.0
+  suncalc: ^1.9.0
   three: ^0.143.0
   typescript: ^4.6.4
   vite: ^3.0.7
@@ -12,10 +14,12 @@ specifiers:
 dependencies:
   preact: 10.10.2
   simplex-noise: 4.0.0
+  suncalc: 1.9.0
   three: 0.143.0
 
 devDependencies:
   '@preact/preset-vite': 2.3.0_preact@10.10.2+vite@3.0.7
+  '@types/suncalc': 1.8.1
   '@types/three': 0.143.0
   typescript: 4.7.4
   vite: 3.0.7
@@ -372,6 +376,10 @@ packages:
     dependencies:
       estree-walker: 2.0.2
       picomatch: 2.3.1
+    dev: true
+
+  /@types/suncalc/1.8.1:
+    resolution: {integrity: sha512-PNtzFQhdAIw3x5HEjVMxbyBwciX42C/Cg6J1foq2z/t9rucLGGu9nqQxOl005wGZR/fOxw49exwZUCmbnT/vGw==}
     dev: true
 
   /@types/three/0.143.0:
@@ -809,6 +817,10 @@ packages:
     resolution: {integrity: sha512-R0XvVJ9WusLiqTCEiGCmICCMplcCkIwwR11mOSD9CR5u+IXYdiseeEuXCVAjS54zqwkLcPNnmU4OeJ6tUrWhDw==}
     engines: {node: '>=0.10.0'}
     dev: true
+
+  /suncalc/1.9.0:
+    resolution: {integrity: sha512-vMJ8Byp1uIPoj+wb9c1AdK4jpkSKVAywgHX0lqY7zt6+EWRRC3Z+0Ucfjy/0yxTVO1hwwchZe4uoFNqrIC24+A==}
+    dev: false
 
   /supports-color/5.5.0:
     resolution: {integrity: sha512-QjVjwdXIt408MIiAqCX4oUKsgU2EqAGzs2Ppkm4aQYbjm+ZEWEcW4SfFNTr4uMNZma0ey4f5lgLrkB0aX0QMow==}
