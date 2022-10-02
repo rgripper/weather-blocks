@@ -216,7 +216,7 @@ export function TerrainPreview({
       const tick = () => {
         if (isDone) return;
 
-        function hourToHourAngle(hourFromMidnight: number) {
+        function getHourToHourAngle(hourFromMidnight: number) {
           return degreesToRadians(15 * (hourFromMidnight - 12));
         }
 
@@ -224,14 +224,14 @@ export function TerrainPreview({
           return (deg * Math.PI) / 180;
         }
 
-        function solarDeclinaton(dayOfYear: number) {
+        function getSolarDeclinaton(dayOfYear: number) {
           return (
             degreesToRadians(23.45) *
             Math.sin((degreesToRadians(360) / 365) * dayOfYear)
           );
         }
 
-        function zenithAngle(
+        function getZenithAngle(
           latitude: number,
           declination: number,
           hourAngle: number
@@ -250,12 +250,12 @@ export function TerrainPreview({
           hour: number,
           dayOfYear: number
         ) {
-          // const solarradiation = 1333;
-          const hourangle = hourToHourAngle(hour);
-          const declination = solarDeclinaton(dayOfYear);
-          const zenithangle = zenithAngle(latitude, declination, hourangle);
+          const solarRadiation = 1333;
+          const hourangle = getHourToHourAngle(hour);
+          const declination = getSolarDeclinaton(dayOfYear);
+          const zenithAngle = getZenithAngle(latitude, declination, hourangle);
           // console.log({ hourangle, declination, zenithangle })
-          return -Math.cos(zenithangle);
+          return solarRadiation * Math.cos(zenithAngle);
         }
 
         function daysIntoYear(date: Date) {
