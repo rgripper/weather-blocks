@@ -13,7 +13,7 @@ export function* generateElevationBlocks(landscapeSize: {
   length: number;
 }) {
   const xoff = landscapeSize.width / 2;
-  const yoff = landscapeSize.length / 2;
+  const zoff = landscapeSize.length / 2;
   const noise2D = createNoise2D();
   const noise_scale = 0.02;
   for (let i = 1; i < landscapeSize.width; i++) {
@@ -22,7 +22,7 @@ export function* generateElevationBlocks(landscapeSize: {
         noise2D(noise_scale * i, noise_scale * j) * 10
       );
       const block: TerrainBlock = {
-        position: [i - xoff, j - yoff, elevation],
+        position: [i - xoff, elevation, j - zoff],
         biomeType:
           elevation > 6
             ? "white"
@@ -62,10 +62,10 @@ export function convertTerrainBlockToMesh(
     return (r << 16) + (g << 8) + b;
   }
 
-  const grayFactor = Math.min(1, (z + 10) / 20);
+  const grayFactor = Math.min(1, (y + 10) / 20);
 
   mat.color.setHex(hexWithGray(color, grayFactor));
 
-  cube.position.set(x * cubeSize, y * cubeSize, Math.max(z, 0) * cubeSize);
+  cube.position.set(x * cubeSize, Math.max(y, 0) * cubeSize, z * cubeSize);
   return cube;
 }

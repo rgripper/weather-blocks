@@ -25,15 +25,17 @@ function init({
     1,
     10000
   );
-  camera.position.set(0, cameraOffset, cameraHeight);
-  camera.up = new THREE.Vector3(0, 0, 1);
+  camera.position.set(0, cameraHeight, cameraOffset);
+  camera.up = new THREE.Vector3(0, 1, 0);
   camera.lookAt(new THREE.Vector3(0, 0, 0));
   const scene = new THREE.Scene();
 
   const geom = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
 
   const sunLight = new THREE.DirectionalLight(0xffffff, 1);
-  sunLight.position.set(40, 60, 225);
+
+  sunLight.position.set(0, 0, 0);
+
   sunLight.shadow.mapSize.width = 512; // default
   sunLight.shadow.mapSize.height = 512; // default
   sunLight.castShadow = true;
@@ -48,9 +50,12 @@ function init({
     )
   );
 
-  const defaultMoonlightIntencity = 0.02
-  const moonLight = new THREE.DirectionalLight(0xefffff, defaultMoonlightIntencity);
-  moonLight.position.set(140, 160, 225);
+  const defaultMoonlightIntencity = 0.02;
+  const moonLight = new THREE.DirectionalLight(
+    0xefffff,
+    defaultMoonlightIntencity
+  );
+  moonLight.position.set(1000, 100, 225);
   moonLight.shadow.mapSize.width = 512; // default
   moonLight.shadow.mapSize.height = 512; // default
   moonLight.castShadow = true;
@@ -98,6 +103,7 @@ function init({
 
   function render(
     camera: THREE.Camera,
+    date: Date,
     renderer: THREE.Renderer,
     scene: THREE.Scene,
     angle: number,
@@ -108,12 +114,14 @@ function init({
     const rads = (angle * Math.PI) / 180;
     camera.position.set(
       Math.cos(rads) * cameraOffset,
-      Math.sin(rads) * cameraOffset,
-      cameraHeight
+      cameraHeight,
+      Math.sin(rads) * cameraOffset
     );
 
     const fastGrowthAndFlatMid = (x: number) => Math.log10(1 + x * 9);
-    const preceivedIntensity = fastGrowthAndFlatMid(sunPosition.insolation);
+    const zenithAngle = Math.cos(Math.PI / 2 - sunPosition.altitude); // from -90 to 90 in Rad
+    const preceivedIntensity = zenithAngle;
+
     const peakColor = 0xffffff;
     const altitudeFilteredSunlightColor = adjustLightByAltitude(
       peakColor,
@@ -128,9 +136,30 @@ function init({
     sunLight.intensity = preceivedIntensity;
     sunLight.color = new THREE.Color(altitudeFilteredSunlightColor);
     sunLight.lookAt(scene.position);
+    const sunDistance = 1500;
 
-    console.log(defaultMoonlightIntencity * moonPosition.altitude * moonIllumination.fraction)
-    moonLight.intensity = defaultMoonlightIntencity * moonPosition.altitude * moonIllumination.fraction;
+    console.log({
+      time: date.toLocaleTimeString("de-DE"),
+      //x: -Math.sin(sunPosition.azimuth) * sunDistance,
+      //azimuth: (sunPosition.azimuth / Math.PI) * 180,
+      //z: Math.cos(sunPosition.azimuth) * sunDistance,
+      y: Math.sin(sunPosition.altitude) * sunDistance,
+      //altitude: (sunPosition.altitude / Math.PI) * 180,
+      intensity: preceivedIntensity,
+      // insolation,
+      // zenithAngle
+    });
+
+    sunLight.position.set(
+      -Math.sin(sunPosition.azimuth) * sunDistance,
+      Math.sin(sunPosition.altitude) * sunDistance,
+      Math.cos(sunPosition.azimuth) * sunDistance
+    );
+
+    moonLight.intensity =
+      defaultMoonlightIntencity *
+      moonPosition.altitude *
+      moonIllumination.fraction;
     moonLight.color = new THREE.Color(altitudeFilteredMoonlightColor);
     moonLight.lookAt(scene.position);
 
@@ -142,11 +171,21 @@ function init({
   return {
     render: (
       angle: number,
+      date: Date,
       sunPosition: SunCalc.GetSunPositionResult,
       moonPosition: SunCalc.GetMoonPositionResult,
       moonIllumination: SunCalc.GetMoonIlluminationResult
     ) => {
-      render(camera, renderer, scene, angle, sunPosition, moonPosition, moonIllumination);
+      render(
+        camera,
+        date,
+        renderer,
+        scene,
+        angle,
+        sunPosition,
+        moonPosition,
+        moonIllumination
+      );
     },
     element: renderer.domElement,
   };
@@ -183,12 +222,6 @@ function adjustLightByAltitude(
   rgb.b = Math.round((rgb.b * (1 + position.altitude / (Math.PI / 2))) / 2);
   rgb.g = Math.round((rgb.g * (1 + position.altitude / (Math.PI / 2))) / 2);
   const altitudeFilteredColor = rgbToHex(rgb);
-  console.log(
-    position.altitude,
-    (1 + position.altitude) / 2,
-    peakColor.toString(16),
-    altitudeFilteredColor.toString(16)
-  );
   return altitudeFilteredColor;
 }
 
@@ -232,11 +265,10 @@ export function TerrainPreview({
         }
 
         function getZenithAngle(
-          latitude: number,
+          latitudeRadians: number,
           declination: number,
           hourAngle: number
         ) {
-          const latitudeRadians = degreesToRadians(latitude);
           return (
             Math.acos(Math.sin(latitudeRadians) * Math.sin(declination)) +
             Math.cos(latitudeRadians) *
@@ -270,31 +302,12 @@ export function TerrainPreview({
         }
 
         const sunPosition = SunCalc.getPosition(date, 40.1789, -3.5156);
-        console.log(
-          date.getHours(),
-          hourInsolaton(40.1789, date.getHours(), daysIntoYear(date)).toFixed(
-            2
-          ),
-          sunPosition.altitude.toFixed(2)
-        );
         const moonPosition = SunCalc.getMoonPosition(date, 40.1789, -3.5156);
         const moonIllumination = SunCalc.getMoonIllumination(date);
 
-        render(
-          angle,
-          {
-            ...sunPosition,
-            insolation: hourInsolaton(
-              40.1789,
-              date.getHours() + date.getMinutes() / 60,
-              daysIntoYear(date)
-            ),
-          },
-          moonPosition,
-          moonIllumination
-        );
+        render(angle, date, sunPosition, moonPosition, moonIllumination);
         date.setTime(date.getTime() + 1000 * 60 * 2);
-        angle = angle > 360 ? 0 : angle + 0.2;
+        // angle = angle > 360 ? 0 : angle + 0.2;
         window.requestAnimationFrame(tick);
       };
       tick();
