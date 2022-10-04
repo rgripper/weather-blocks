@@ -50,10 +50,10 @@ function init({
     )
   );
 
-  const defaultMoonlightIntencity = 0.02;
+  const defaultMoonlightIntensity = 0.02;
   const moonLight = new THREE.DirectionalLight(
     0xefffff,
-    defaultMoonlightIntencity
+    defaultMoonlightIntensity
   );
   moonLight.position.set(1000, 100, 225);
   moonLight.shadow.mapSize.width = 512; // default
@@ -119,8 +119,11 @@ function init({
     );
 
     const fastGrowthAndFlatMid = (x: number) => Math.log10(1 + x * 9);
-    const zenithAngle = Math.cos(Math.PI / 2 - sunPosition.altitude); // from -90 to 90 in Rad
-    const preceivedIntensity = zenithAngle;
+
+    // const preceivedIntensity = Math.max(
+    //   0.1,
+    //   Math.cos(Math.PI / 2 - sunPosition.altitude)
+    // ); // cos of zenith Angle
 
     const peakColor = 0xffffff;
     const altitudeFilteredSunlightColor = adjustLightByAltitude(
@@ -133,38 +136,24 @@ function init({
       moonPosition
     );
 
-    sunLight.intensity = preceivedIntensity;
+    sunLight.intensity = 1;
     sunLight.color = new THREE.Color(altitudeFilteredSunlightColor);
     sunLight.lookAt(scene.position);
     const sunDistance = 1500;
 
-    console.log({
-      time: date.toLocaleTimeString("de-DE"),
-      //x: -Math.sin(sunPosition.azimuth) * sunDistance,
-      //azimuth: (sunPosition.azimuth / Math.PI) * 180,
-      //z: Math.cos(sunPosition.azimuth) * sunDistance,
-      y: Math.sin(sunPosition.altitude) * sunDistance,
-      //altitude: (sunPosition.altitude / Math.PI) * 180,
-      intensity: preceivedIntensity,
-      // insolation,
-      // zenithAngle
-    });
-
-    sunLight.position.set(
-      -Math.sin(sunPosition.azimuth) * sunDistance,
-      Math.sin(sunPosition.altitude) * sunDistance,
-      Math.cos(sunPosition.azimuth) * sunDistance
-    );
+    const sunPositionVec = getPosition(sunPosition, sunDistance);
+    sunLight.position.set(...sunPositionVec);
 
     moonLight.intensity =
-      defaultMoonlightIntencity *
+      defaultMoonlightIntensity *
       moonPosition.altitude *
       moonIllumination.fraction;
     moonLight.color = new THREE.Color(altitudeFilteredMoonlightColor);
     moonLight.lookAt(scene.position);
+    const moonPositionVec = getPosition(moonPosition, 2000); // moonPosition.distance);
+    moonLight.position.set(...moonPositionVec);
 
     camera.lookAt(scene.position);
-
     renderer.render(scene, camera);
   }
 
@@ -189,6 +178,17 @@ function init({
     },
     element: renderer.domElement,
   };
+}
+
+function getPosition(
+  sunPosition: { azimuth: number; altitude: number },
+  distance: number
+) {
+  return [
+    -Math.sin(sunPosition.azimuth) * distance,
+    Math.sin(sunPosition.altitude) * distance,
+    Math.cos(sunPosition.azimuth) * distance,
+  ] as const;
 }
 
 function adjustLightByAltitude(
@@ -225,6 +225,7 @@ function adjustLightByAltitude(
   return altitudeFilteredColor;
 }
 
+const startDate = new Date(2022, 8, 2);
 export function TerrainPreview({
   width,
   length,
@@ -235,6 +236,13 @@ export function TerrainPreview({
   cubeSize: number;
 }) {
   const [container, setContainer] = useState<HTMLElement | null>(null);
+
+  const [currentTime, setCurrentTime] = useState(
+    startDate.toLocaleTimeString("en-UK", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  );
   useEffect(() => {
     if (container) {
       const { render, element } = init({
@@ -245,7 +253,7 @@ export function TerrainPreview({
 
       let angle = 0;
       let isDone = false;
-      const date = new Date(2022, 7, 24);
+      const date = startDate;
       const tick = () => {
         if (isDone) return;
 
@@ -306,7 +314,14 @@ export function TerrainPreview({
         const moonIllumination = SunCalc.getMoonIllumination(date);
 
         render(angle, date, sunPosition, moonPosition, moonIllumination);
-        date.setTime(date.getTime() + 1000 * 60 * 2);
+        date.setTime(date.getTime() + 1000 * 60 * 20);
+
+        setCurrentTime(
+          date.toLocaleTimeString("en-UK", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        );
         // angle = angle > 360 ? 0 : angle + 0.2;
         window.requestAnimationFrame(tick);
       };
@@ -320,5 +335,10 @@ export function TerrainPreview({
     }
   }, [container]);
 
-  return <div ref={setContainer}></div>;
+  return (
+    <div>
+      <h3>{currentTime}</h3>
+      <div ref={setContainer}></div>
+    </div>
+  );
 }
