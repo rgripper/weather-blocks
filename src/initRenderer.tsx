@@ -1,7 +1,6 @@
 import * as THREE from "three";
 import { convertTerrainBlockToMesh, TerrainBlock } from "./blocks";
-import SunCalc from "suncalc";
-import { getPosition } from "./TerrainPreview";
+import { getSunMoonStates, SunOrMoonState } from "./sunMoonCalc";
 
 export function initRenderer({
   elevationBlocks,
@@ -46,11 +45,7 @@ export function initRenderer({
     )
   );
 
-  const defaultMoonlightIntensity = 0.02;
-  const moonLight = new THREE.DirectionalLight(
-    0xefffff,
-    defaultMoonlightIntensity
-  );
+  const moonLight = new THREE.DirectionalLight(0xffffff, 1);
   moonLight.position.set(1000, 100, 225);
   moonLight.shadow.mapSize.width = 512; // default
   moonLight.shadow.mapSize.height = 512; // default
@@ -98,14 +93,9 @@ export function initRenderer({
   );
 
   function render(
-    camera: THREE.Camera,
     date: Date,
-    renderer: THREE.Renderer,
-    scene: THREE.Scene,
-    angle: number,
-    sunPosition: SunCalc.GetSunPositionResult,
-    moonPosition: SunCalc.GetMoonPositionResult,
-    moonIllumination: SunCalc.GetMoonIlluminationResult
+    geoPosition: { latitude: number; longitude: number },
+    angle: number
   ) {
     const rads = (angle * Math.PI) / 180;
     camera.position.set(
@@ -114,106 +104,26 @@ export function initRenderer({
       Math.sin(rads) * cameraOffset
     );
 
-    const fastGrowthAndFlatMid = (x: number) => Math.log10(1 + x * 9);
+    const { sunState, moonState } = getSunMoonStates(date, geoPosition);
 
-    // const preceivedIntensity = Math.max(
-    //   0.1,
-    //   Math.cos(Math.PI / 2 - sunPosition.altitude)
-    // ); // cos of zenith Angle
-    const peakColor = 0xffffff;
-    const altitudeFilteredSunlightColor = adjustLightByAltitude(
-      peakColor,
-      sunPosition,
-      1
-    );
+    setLightParams(sunLight, sunState);
+    setLightParams(moonLight, moonState);
 
-    const altitudeFilteredMoonlightColor = adjustLightByAltitude(
-      peakColor,
-      moonPosition
-    );
-
-    sunLight.intensity = 1;
-    sunLight.color = new THREE.Color(altitudeFilteredSunlightColor);
-    sunLight.lookAt(scene.position);
-    const sunDistance = 1500;
-
-    const sunPositionVec = getPosition(sunPosition, sunDistance);
-    sunLight.position.set(...sunPositionVec);
-
-    moonLight.intensity =
-      defaultMoonlightIntensity *
-      moonPosition.altitude *
-      moonIllumination.fraction;
-    moonLight.color = new THREE.Color(altitudeFilteredMoonlightColor);
     moonLight.lookAt(scene.position);
-    const moonPositionVec = getPosition(moonPosition, 2000); // moonPosition.distance);
-    moonLight.position.set(...moonPositionVec);
-
+    sunLight.lookAt(scene.position);
     camera.lookAt(scene.position);
     renderer.render(scene, camera);
   }
 
   return {
-    render: (
-      angle: number,
-      date: Date,
-      sunPosition: SunCalc.GetSunPositionResult,
-      moonPosition: SunCalc.GetMoonPositionResult,
-      moonIllumination: SunCalc.GetMoonIlluminationResult
-    ) => {
-      render(
-        camera,
-        date,
-        renderer,
-        scene,
-        angle,
-        sunPosition,
-        moonPosition,
-        moonIllumination
-      );
-    },
+    render,
     element: renderer.domElement,
   };
 }
 
-function adjustLightByAltitude(
-  peakColor: number,
-  position: SunCalc.GetSunPositionResult,
-  x?: number
-) {
-  const rgb = hexToRgb(peakColor);
-  const altitudeFactor = Math.cos(position.altitude * 2);
-
-  const blueFilterFactor = Math.min(1, 1.5 * Math.max(0, altitudeFactor)); // it drops as the sun goes higher
-
-  rgb.b = Math.round(rgb.b * (1 - blueFilterFactor));
-  rgb.g = Math.round(rgb.g * (1 - 0.6 * blueFilterFactor));
-  const altitudeFilteredColor = rgbToHex(rgb);
-  if (x) {
-    console.log(rgb, altitudeFactor, blueFilterFactor);
-  }
-  return altitudeFilteredColor;
-}
-
-function componentToHex(c: number): string {
-  var hex = c.toString(16);
-  return hex.length == 1 ? "0" + hex : hex;
-}
-
-function hexToRgb(hex: number) {
-  var result = /^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(
-    hex.toString(16).padStart(6, "0")
-  )!;
-  return {
-    r: parseInt(result[1], 16),
-    g: parseInt(result[2], 16),
-    b: parseInt(result[3], 16),
-  };
-}
-
-function rgbToHex({ r, g, b }: { r: number; g: number; b: number }) {
-  return parseInt(
-    componentToHex(r) + componentToHex(g) + componentToHex(b),
-    16
-  );
+function setLightParams(light: THREE.DirectionalLight, state: SunOrMoonState) {
+  const { intensity, altitudeFilteredColor, positionVec } = state;
+  light.intensity = intensity;
+  light.color = new THREE.Color(altitudeFilteredColor);
+  light.position.set(...positionVec);
 }

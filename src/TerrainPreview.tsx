@@ -45,12 +45,8 @@ export function TerrainPreview({
       const date = startDate;
       const tick = () => {
         if (isDone) return;
-
-        const sunPosition = SunCalc.getPosition(date, 40.1789, -3.5156);
-        const moonPosition = SunCalc.getMoonPosition(date, 40.1789, -3.5156);
-        const moonIllumination = SunCalc.getMoonIllumination(date);
-
-        render(angle, date, sunPosition, moonPosition, moonIllumination);
+        const geoPosition = { latitude: 40.1789, longitude: -3.5156 };
+        render(date, geoPosition, angle);
         date.setTime(date.getTime() + 1000 * 60 * 3);
 
         setCurrentTime(
