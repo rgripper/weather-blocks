@@ -27,15 +27,11 @@ export function initRenderer({
 
   const geom = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
 
-  const sunLight = new THREE.DirectionalLight(0xffffff, 1);
-
-  sunLight.position.set(0, 0, 0);
-
+  const sunLight = new THREE.DirectionalLight();
   sunLight.shadow.mapSize.width = 512; // default
   sunLight.shadow.mapSize.height = 512; // default
   sunLight.castShadow = true;
   sunLight.shadow.bias = -0.005; // reduces self-shadowing on double-sided objects
-
   sunLight.add(
     new THREE.Mesh(
       new THREE.SphereGeometry(50, 10, 10),
@@ -45,12 +41,10 @@ export function initRenderer({
     )
   );
 
-  const moonLight = new THREE.DirectionalLight(0xffffff, 1);
-  moonLight.position.set(1000, 100, 225);
+  const moonLight = new THREE.DirectionalLight();
   moonLight.shadow.mapSize.width = 512; // default
   moonLight.shadow.mapSize.height = 512; // default
   moonLight.castShadow = true;
-
   moonLight.add(
     new THREE.Mesh(
       new THREE.SphereGeometry(50, 10, 10),

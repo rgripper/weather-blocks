@@ -1,6 +1,5 @@
 import { useEffect, useState } from "preact/hooks";
 import { generateElevationBlocks } from "./blocks";
-import SunCalc from "suncalc";
 import { initRenderer } from "./initRenderer";
 
 export function getPosition(

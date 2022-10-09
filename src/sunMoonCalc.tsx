@@ -16,7 +16,7 @@ export function getSunMoonStates(date: Date, geoPosition: { latitude: number, lo
 function getMoonState(
   position: SunCalc.GetMoonPositionResult,
   illumination: SunCalc.GetMoonIlluminationResult) {
-  const moonLightPeakColor = 0xffffff;
+  const moonLightPeakColor = 0xefffff; // it's slightly bluish
   const altitudeFilteredColor = adjustLightByAltitude(
     moonLightPeakColor,
     position
@@ -54,6 +54,7 @@ function adjustLightByAltitude(
   const rgb = hexToRgb(peakColor);
   const altitudeFactor = Math.cos(position.altitude * 2);
 
+  // Fake Rayleigh scattering
   const blueFilterFactor = Math.min(1, 1.5 * Math.max(0, altitudeFactor)); // it drops as the sun goes higher
 
   rgb.b = Math.round(rgb.b * (1 - blueFilterFactor));
